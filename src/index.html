@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Attendance System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="./output.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#18181B',
+                            foreground: '#ffffff',
+                        },
+                        secondary: {
+                            DEFAULT: '#f3f4f6',
+                            foreground: '#1f2937',
+                        },
+                        accent: {
+                            DEFAULT: '#10b981',
+                            foreground: '#ffffff',
+                        },
+                        muted: {
+                            DEFAULT: '#f3f4f6',
+                            foreground: '#6b7280',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .notification-enter {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        .notification-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms, transform 300ms;
+        }
+        .notification-exit {
+            opacity: 1;
+        }
+        .notification-exit-active {
+            opacity: 0;
+            transition: opacity 300ms;
+        }
+    </style>
+</head>
+<body class="bg-secondary min-h-screen font-sans">
+    <div id="app">
+        <!-- Login Form -->
+        <div id="loginForm" class="min-h-screen flex items-center justify-center bg-secondary">
+            <div class="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-2 w-full max-w-md">
+                <h2 class="mb-6 text-2xl font-bold text-center text-secondary-foreground">Login to Employee Attendance System</h2>
+                <form id="login-form">
+                    <div class="mb-4">
+                        <label class="block text-secondary-foreground text-sm font-bold mb-2" for="username">
+                            Username
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-secondary-foreground leading-tight focus:outline-none focus:ring-2 focus:ring-primary" id="username" type="text" placeholder="Username" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-secondary-foreground text-sm font-bold mb-2" for="password">
+                            Password
+                        </label>
+                        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-secondary-foreground mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-primary" id="password" type="password" placeholder="******************" required>
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-secondary-foreground text-sm font-bold mb-2" for="biometric">
+                            Biometric Authentication
+                        </label>
+                        <div id="biometric-scanner" class="w-32 h-32 mx-auto bg-gray-200 rounded-lg flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+                            </svg>
+                        </div>
+                        <p id="biometric-status" class="mt-2 text-center text-sm text-muted-foreground">Click to scan fingerprint</p>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <button class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" type="submit">
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+                <p id="login-error" class="text-red-500 text-xs italic mt-4 hidden">Invalid credentials or biometric data</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard" class="hidden">
+            <header class="bg-white shadow">
+                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                    <h1 class="text-3xl font-bold text-secondary-foreground">Employee Attendance System</h1>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-muted-foreground hover:text-secondary-foreground">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </button>
+                        <div class="relative">
+                            <button id="user-menu-button" class="flex items-center space-x-2 text-secondary-foreground hover:text-primary">
+                                <img class="h-8 w-8 rounded-full" src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="User avatar">
+                                <span id="user-name"></span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div id="user-menu-dropdown" class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
+                                <div class="py-1">
+                                    <a href="#" class="block px-4 py-2 text-sm text-secondary-foreground hover:bg-secondary" onclick="switchAccount('admin')">Switch to Admin</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-secondary-foreground hover:bg-secondary" onclick="switchAccount('manager')">Switch to Manager</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-secondary-foreground hover:bg-secondary" onclick="switchAccount('employee')">Switch to Employee</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-secondary-foreground hover:bg-secondary" onclick="logout()">Logout</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div id="employee-dashboard" class="hidden space-y-6">
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Employee Dashboard</h2>
+                        </div>
+                        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                            <dl class="sm:divide-y sm:divide-gray-200">
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-muted-foreground">Full name</dt>
+                                    <dd class="mt-1 text-sm text-secondary-foreground sm:mt-0 sm:col-span-2" id="employee-name"></dd>
+                                </div>
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-muted-foreground">Department</dt>
+                                    <dd class="mt-1 text-sm text-secondary-foreground sm:mt-0 sm:col-span-2" id="employee-department"></dd>
+                                </div>
+                                <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                                    <dt class="text-sm font-medium text-muted-foreground">Clock In/Out</dt>
+                                    <dd class="mt-1 text-sm text-secondary-foreground sm:mt-0 sm:col-span-2">
+                                        <button id="clock-button" class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded">
+                                            Clock In
+                                        </button>
+                                    </dd>
+                                </div>
+                            </dl>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Attendance History</h2>
+                        </div>
+                        <div class="border-t border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-secondary">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Clock In</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Clock Out</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="attendance-history">
+                                    <!-- Attendance history will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Leave Request</h2>
+                        </div>
+                        <div class="border-t border-gray-200 px-4 py-5 sm:p-0 pl-6">
+                            <form id="leave-request-form" class="space-y-4">
+                                <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
+                                    <label for="start-date" class="block text-sm font-medium text-secondary-foreground sm:mt-px sm:pt-2 pl-7">
+                                        Start Date
+                                    </label>
+                                    <div class="mt-1 sm:mt-0 sm:col-span-2">
+                                        <input type="date" name="start-date" id="start-date" class="max-w-lg block w-full shadow-sm focus:ring-primary focus:border-primary sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                                <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
+                                    <label for="end-date" class="block text-sm font-medium text-secondary-foreground sm:mt-px sm:pt-2 pl-7">
+                                        End Date
+                                    </label>
+                                    <div class="mt-1 sm:mt-0 sm:col-span-2">
+                                        <input type="date" name="end-date" id="end-date" class="max-w-lg block w-full shadow-sm focus:ring-primary focus:border-primary sm:max-w-xs sm:text-sm border-gray-300 rounded-md">
+                                    </div>
+                                </div>
+                                <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:pt-5">
+                                    <label for="reason" class="block text-sm font-medium text-secondary-foreground sm:mt-px sm:pt-2 pl-7">
+                                        Reason
+                                    </label>
+                                    <div class="mt-1 sm:mt-0 sm:col-span-2">
+                                        <textarea id="reason" name="reason" rows="3" class="max-w-lg shadow-sm block w-full focus:ring-primary focus:border-primary sm:text-sm border border-gray-300 rounded-md"></textarea>
+                                    </div>
+                                </div>
+                                <div class="py-5">
+                                    <div class="flex justify-center items-center ">
+                                        <button type="submit" class="ml-3 inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-primary-foreground bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
+                                            Submit Leave Request
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="admin-dashboard" class="hidden space-y-6">
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Employee Management</h2>
+                        </div>
+                        <div class="border-t border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-secondary">
+                                    <tr>
+                                        <th scope="col" 
+                                            class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                            Name</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                            Department</th>
+                                        <th scope="col"
+                                            class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                                            Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="employee-list">
+                                    <!-- Employee list will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Department Overview</h2>
+                        </div>
+                        <div class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                            <div class="sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5" id="department-overview">
+                                <!-- Department overview will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="manager-dashboard" class="hidden space-y-6">
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Team Overview</h2>
+                        </div>
+                        <div class="border-t border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-secondary">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Department</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="team-overview">
+                                    <!-- Team overview will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+                        <div class="px-4 py-5 sm:px-6">
+                            <h2 class="text-lg leading-6 font-medium text-secondary-foreground">Leave Requests</h2>
+                        </div>
+                        <div class="border-t border-gray-200">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-secondary">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Employee</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Range</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Reason</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="leave-requests-list">
+                                    <!-- Leave requests will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // Simulated API calls
+        const api = {
+            login: async (username, password, biometricData) => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                if (
+                    (username === 'admin' && password === 'password') ||
+                    (username === 'employee' && password === 'password') ||
+                    (username === 'manager' && password === 'password') ||
+                    biometricData
+                ) {
+                    const role = username === 'admin' ? 'admin' : (username === 'manager' ? 'manager' : 'employee');
+                    const name = username === 'admin' ? 'Admin User' : (username === 'manager' ? 'Jane Manager' : 'John Doe');
+                    return { role, name };
+                }
+                throw new Error('Invalid credentials');
+            },
+            fetchAttendance: async () => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return [
+                    { date: '2023-05-01', clockIn: '09:00', clockOut: '17:00' },
+                    { date: '2023-05-02', clockIn: '08:55', clockOut: '17:05' },
+                    { date: '2023-05-03', clockIn: '09:10', clockOut: '17:15' },
+                ];
+            },
+            clockIn: async () => {
+                // Get current time
+                const now = new Date();
+                const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                const currentDate = now.toISOString().split('T')[0];
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return { 
+                    success: true, 
+                    message: 'Clocked in successfully',
+                    time: currentTime,
+                    date: currentDate
+                };
+            },
+            clockOut: async () => {
+                // Get current time
+                const now = new Date();
+                const currentTime = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return { 
+                    success: true, 
+                    message: 'Clocked out successfully',
+                    time: currentTime
+                };
+            },
+            submitLeaveRequest: async (startDate, endDate, reason) => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                const request = {
+                    id: Date.now(),
+                    employee: currentUser.name,
+                    startDate,
+                    endDate,
+                    reason,
+                    status: 'pending'
+                };
+                api.leaveRequests.push(request);
+                return { success: true, message: 'Leave request submitted successfully' };
+            },
+            fetchEmployees: async () => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return [
+                    { id: 1, name: 'John Doe', department: 'Engineering' },
+                    { id: 2, name: 'Jane Smith', department: 'Marketing' },
+                    { id: 3, name: 'Bob Johnson', department: 'Sales' },
+                ];
+            },
+            fetchDepartments: async () => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                return [
+                    { id: 1, name: 'Engineering', employeeCount: 50 },
+                    { id: 2, name: 'Marketing', employeeCount: 30 },
+                    { id: 3, name: 'Sales', employeeCount: 40 },
+                ];
+            },
+            leaveRequests: [],  // Store leave requests in memory
+            handleLeaveAction: async (requestId, action) => {
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Find and update the request
+                const request = api.leaveRequests.find(req => req.id === requestId);
+                if (request) {
+                    request.status = action;
+                    return { 
+                        success: true, 
+                        message: `Leave request ${action}ed successfully`,
+                        request
+                    };
+                }
+                throw new Error('Request not found');
+            },
+        };
+
+        // Global state
+        let currentUser = null;
+
+        // DOM Elements
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const dashboard = document.getElementById('dashboard');
+        const employeeDashboard = document.getElementById('employee-dashboard');
+        const adminDashboard = document.getElementById('admin-dashboard');
+        const managerDashboard = document.getElementById('manager-dashboard');
+        const userName = document.getElementById('user-name');
+        const clockButton = document.getElementById('clock-button');
+        const leaveRequestForm = document.getElementById('leave-request-form');
+        const biometricScanner = document.getElementById('biometric-scanner');
+        const biometricStatus = document.getElementById('biometric-status');
+
+        // Event Listeners
+        loginForm.addEventListener('submit', handleLogin);
+        clockButton.addEventListener('click', handleClockInOut);
+        leaveRequestForm.addEventListener('submit', handleLeaveRequest);
+        biometricScanner.addEventListener('click', handleBiometricScan);
+
+        // Biometric Scan Handler
+        async function handleBiometricScan() {
+            biometricStatus.textContent = 'Scanning...';
+            biometricScanner.classList.add('bg-blue-200');
+
+            // Simulate biometric scan
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            biometricStatus.textContent = 'Scan complete';
+            biometricScanner.classList.remove('bg-blue-200');
+            biometricScanner.classList.add('bg-green-200');
+
+            // Attempt login with biometric data
+            try {
+                currentUser = await api.login(null, null, true);
+                document.getElementById('loginForm').classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                userName.textContent = currentUser.name;
+                showDashboard(currentUser.role);
+            } catch (error) {
+                loginError.classList.remove('hidden');
+                biometricScanner.classList.remove('bg-green-200');
+                biometricScanner.classList.add('bg-red-200');
+                biometricStatus.textContent = 'Scan failed. Try again.';
+            }
+        }
+
+        // Login Handler
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                currentUser = await api.login(username, password);
+                document.getElementById('loginForm').classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                userName.textContent = currentUser.name;
+                showDashboard(currentUser.role);
+            } catch (error) {
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        // Show appropriate dashboard based on user role
+        function showDashboard(role) {
+            employeeDashboard.classList.add('hidden');
+            adminDashboard.classList.add('hidden');
+            managerDashboard.classList.add('hidden');
+
+            switch (role) {
+                case 'employee':
+                    employeeDashboard.classList.remove('hidden');
+                    loadEmployeeDashboard();
+                    break;
+                case 'admin':
+                    adminDashboard.classList.remove('hidden');
+                    loadAdminDashboard();
+                    break;
+                case 'manager':
+                    managerDashboard.classList.remove('hidden');
+                    loadManagerDashboard();
+                    break;
+            }
+        }
+
+        // Load Employee Dashboard
+        async function loadEmployeeDashboard() {
+            document.getElementById('employee-name').textContent = currentUser.name;
+            document.getElementById('employee-department').textContent = 'Engineering'; // Hardcoded for this example
+
+            const attendance = await api.fetchAttendance();
+            const attendanceHistory = document.getElementById('attendance-history');
+            attendanceHistory.innerHTML = attendance.map(record => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${record.date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${record.clockIn}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${record.clockOut}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Handle Clock In/Out
+        async function handleClockInOut() {
+            const isClockedIn = clockButton.textContent === 'Clock Out';
+            const result = isClockedIn ? await api.clockOut() : await api.clockIn();
+            
+            if (result.success) {
+                clockButton.textContent = isClockedIn ? 'Clock In' : 'Clock Out';
+                alert(result.message);
+
+                // Update attendance history
+                const attendanceHistory = document.getElementById('attendance-history');
+                if (!isClockedIn) {
+                    // Clock In - Add new row
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${result.date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${result.time}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">-</td>
+                    `;
+                    attendanceHistory.insertBefore(newRow, attendanceHistory.firstChild);
+                } else {
+                    // Clock Out - Update the latest row
+                    const firstRow = attendanceHistory.firstElementChild;
+                    if (firstRow) {
+                        firstRow.cells[2].textContent = result.time;
+                    }
+                }
+            }
+        }
+
+        // Handle Leave Request
+        async function handleLeaveRequest(e) {
+            e.preventDefault();
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const reason = document.getElementById('reason').value;
+
+            try {
+                const result = await api.submitLeaveRequest(startDate, endDate, reason);
+                notifications.show('Leave request submitted successfully');
+                e.target.reset();
+            } catch (error) {
+                notifications.show('Failed to submit leave request', 'error');
+            }
+        }
+
+        // Load Admin Dashboard
+        async function loadAdminDashboard() {
+            const employees = await api.fetchEmployees();
+            const employeeList = document.getElementById('employee-list');
+            employeeList.innerHTML = employees.map(employee => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${employee.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${employee.department}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">
+                        <button class="bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-2 px-4 rounded">
+                            Edit
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const departments = await api.fetchDepartments();
+            const departmentOverview = document.getElementById('department-overview');
+            departmentOverview.innerHTML = departments.map(department => `
+                <div class="bg-secondary px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                    <dt class="text-sm font-medium text-muted-foreground">${department.name}</dt>
+                    <dd class="mt-1 text-sm text-secondary-foreground sm:mt-0 sm:col-span-2">${department.employeeCount} employees</dd>
+                </div>
+            `).join('');
+        }
+
+        // Load Manager Dashboard
+        async function loadManagerDashboard() {
+            const employees = await api.fetchEmployees();
+            const teamOverview = document.getElementById('team-overview');
+            teamOverview.innerHTML = employees.map(employee => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${employee.name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${employee.department}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent text-accent-foreground">
+                            Present
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+
+            // Update leave requests section
+            const leaveRequestsList = document.getElementById('leave-requests-list');
+            if (api.leaveRequests.length === 0) {
+                leaveRequestsList.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-sm text-muted-foreground">
+                            No pending leave requests
+                        </td>
+                    </tr>
+                `;
+            } else {
+                leaveRequestsList.innerHTML = api.leaveRequests
+                    .filter(request => request.status === undefined || request.status === 'pending')
+                    .map(request => `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${request.employee}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">
+                                ${request.startDate} to ${request.endDate}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">${request.reason}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-foreground">
+                                <button onclick="handleLeaveAction(${request.id}, 'approve')" 
+                                        class="bg-accent hover:bg-accent/90 text-accent-foreground font-bold py-1 px-3 rounded mr-2">
+                                    Approve
+                                </button>
+                                <button onclick="handleLeaveAction(${request.id}, 'reject')"
+                                        class="bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-3 rounded">
+                                    Reject
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('');
+            }
+        }
+
+        // Add to the api object
+        api.leaveRequests = [];  // Store leave requests in memory
+        api.submitLeaveRequest = async (startDate, endDate, reason) => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const request = {
+                id: Date.now(),
+                employee: currentUser.name,
+                startDate,
+                endDate,
+                reason,
+                status: 'pending'
+            };
+            api.leaveRequests.push(request);
+            return { success: true, message: 'Leave request submitted successfully' };
+        };
+
+        // Add these new functions
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('user-menu-dropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        async function switchAccount(role) {
+            const userMap = {
+                admin: { username: 'admin', name: 'Admin User' },
+                manager: { username: 'manager', name: 'Jane Manager' },
+                employee: { username: 'employee', name: 'John Doe' }
+            };
+            
+            try {
+                currentUser = await api.login(userMap[role].username, 'password');
+                userName.textContent = currentUser.name;
+                showDashboard(currentUser.role);
+                toggleUserMenu();
+            } catch (error) {
+                console.error('Error switching account:', error);
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginForm').classList.remove('hidden');
+            dashboard.classList.add('hidden');
+            toggleUserMenu();
+        }
+
+        // Add event listener for user menu button
+        document.getElementById('user-menu-button').addEventListener('click', toggleUserMenu);
+
+        // Add click outside listener to close dropdown
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('user-menu-dropdown');
+            const button = document.getElementById('user-menu-button');
+            if (!dropdown.contains(e.target) && !button.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Add notification system
+        const notifications = {
+            show: (message, type = 'success') => {
+                const notification = document.createElement('div');
+                notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg ${
+                    type === 'success' ? 'bg-accent text-accent-foreground' : 'bg-red-500 text-white'
+                } transition-opacity duration-500`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+
+                // Remove notification after 3 seconds
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => notification.remove(), 500);
+                }, 3000);
+            }
+        };
+
+        // Add leave action handler
+        async function handleLeaveAction(requestId, action) {
+            try {
+                const result = await api.handleLeaveAction(requestId, action);
+                notifications.show(`Leave request ${action}ed successfully`);
+                
+                // Refresh manager dashboard to update the list
+                if (currentUser.role === 'manager') {
+                    loadManagerDashboard();
+                }
+                
+                // If employee dashboard is open, update their view
+                if (currentUser.role === 'employee') {
+                    updateEmployeeLeaveStatus(result.request);
+                }
+            } catch (error) {
+                notifications.show('Failed to process leave request', 'error');
+            }
+        }
+
+        // Update employee dashboard with leave request status
+        function updateEmployeeLeaveStatus(request) {
+            const leaveStatusDiv = document.getElementById('leave-status');
+            if (!leaveStatusDiv) {
+                // Create leave status section if it doesn't exist
+                const leaveRequestForm = document.getElementById('leave-request-form');
+                const statusDiv = document.createElement('div');
+                statusDiv.id = 'leave-status';
+                statusDiv.className = 'mt-4';
+                leaveRequestForm.parentNode.insertBefore(statusDiv, leaveRequestForm.nextSibling);
+            }
+            
+            leaveStatusDiv.innerHTML = `
+                <div class="border-t border-gray-200 pt-4">
+                    <h3 class="text-lg font-medium text-secondary-foreground">Recent Leave Request Status</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-muted-foreground">
+                            ${request.startDate} to ${request.endDate}:
+                            <span class="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${request.status === 'approve' ? 'bg-accent text-accent-foreground' : 'bg-red-500 text-white'}">
+                                ${request.status === 'approve' ? 'Approved' : 'Rejected'}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
